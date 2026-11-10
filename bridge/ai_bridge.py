@@ -121,8 +121,22 @@ def ollama_request(path,payload=None):
         raise RuntimeError(f'Ollama HTTP {e.code}: {detail}')
     except urllib.error.URLError as e: raise RuntimeError(f'Не удалось подключиться к Ollama: {e.reason}')
 
-def chat(message,history=None,images=None,subject=None):
+def chat(message,history=None,images=None,subject=None,errors=None):
     sysp=SYSTEM_PROMPTS.get(subject) or SYSTEM_PROMPT
+    if isinstance(errors,list) and errors:
+        lines=[]
+        for e in errors[:30]:
+            if not isinstance(e,dict): continue
+            task=str(e.get('task') or '').strip()
+            title=str(e.get('title') or '').strip()
+            note=str(e.get('note') or '').strip()
+            status='исправлено' if e.get('status')=='resolved' else 'нужно повторить'
+            row=f"- №{task} ({status}): {title}"
+            if note: row+=f" — {note}"
+            lines.append(row)
+        if lines:
+            sysp=sysp+("\n\nЖурнал ошибок ученика (учитывай его при ответе, если вопрос связан с этими темами, "
+                       "обращай внимание на повторяющиеся ошибки и предлагай их проработать):\n"+"\n".join(lines))
     messages=[{'role':'system','content':sysp}]
     if isinstance(history,list):
         for item in history[-12:]:
@@ -229,7 +243,7 @@ class Handler(BaseHTTPRequestHandler):
                 images=data.get('images')
                 if not str(msg).strip() and not (isinstance(images,list) and images):
                     raise ValueError('Поле message пустое')
-                content=chat(msg,data.get('history'),images,data.get('subject')); return send_json(self,200,{'ok':True,'response':content,'message':{'role':'assistant','content':content}})
+                content=chat(msg,data.get('history'),images,data.get('subject'),data.get('errors')); return send_json(self,200,{'ok':True,'response':content,'message':{'role':'assistant','content':content}})
             if self.path=='/api/generate':
                 prompt=data.get('prompt') or data.get('message') or ''
                 if not str(prompt).strip(): raise ValueError('Поле prompt пустое')

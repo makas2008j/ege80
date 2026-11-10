@@ -1045,6 +1045,7 @@ async function sendAIMessage(text){
     const u=aiUrlFromField(); if(u) localStorage.setItem(AI_URL_KEY,u);
     const t=aiTokenFromField(); if(t) localStorage.setItem(AI_TOKEN_KEY,t);
     const body={message:text,subject:'russian'};
+    if(typeof userErrors!=='undefined'&&Array.isArray(userErrors)&&userErrors.length)body.errors=userErrors.slice(0,30);
     if(aiAttachedImage){body.images=[aiAttachedImage];}
     const r=await fetch(url+'/api/chat',{method:'POST',headers:aiHeaders(true),body:JSON.stringify(body)});
     const d=await r.json().catch(()=>({}));
