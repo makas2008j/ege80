@@ -85,9 +85,18 @@ function saveAI(){
   AI_PREFIXES.forEach(p=>{
    if(url){localStorage.setItem(p+'_ai_url',url);}
    if(token){localStorage.setItem(p+'_ai_token',token);}
- });
+  });
  const msg=document.getElementById('msg');
  if(msg){msg.textContent='Настройки AI сохранены для всех предметов.';msg.className='msg ok';}
+}
+function persistAIFields(){
+ const url=(document.getElementById('aiUrl')?.value||'').trim().replace(/\/+$/,'');
+ const token=(document.getElementById('aiToken')?.value||'').trim();
+ if(!url&&!token)return;
+ AI_PREFIXES.forEach(p=>{
+   if(url)localStorage.setItem(p+'_ai_url',url);
+   if(token)localStorage.setItem(p+'_ai_token',token);
+ });
 }
 function loadAIIntoFields(){
  let u=localStorage.getItem('ege_ai_url')||'';
@@ -146,13 +155,14 @@ function renderLogin(){
     <label>Пароль</label><input id="pass" type="password" placeholder="admin">
     <div class="ai-sec">
       <div class="ai-sec-title">🤖 ИИ-репетитор (необязательно)</div>
-      <label>Ссылка (URL Cloudflare-туннеля)</label><input id="aiUrl" autocomplete="off" placeholder="https://....trycloudflare.com">
-      <label>AI-токен</label><input id="aiToken" type="password" autocomplete="off" placeholder="AI Token">
+      <label>Ссылка (URL Cloudflare-туннеля)</label><input id="aiUrl" autocomplete="off" placeholder="https://....trycloudflare.com" oninput="persistAIFields()">
+      <label>AI-токен</label><input id="aiToken" type="password" autocomplete="off" placeholder="AI Token" oninput="persistAIFields()">
     </div>
     <button class="btn" onclick="doLogin()">Войти</button>
     <button class="link" onclick="renderRegister()">Нет аккаунта? Зарегистрироваться</button>
     <div class="msg" id="msg"></div>
   </div>`;
+ loadAIIntoFields();
 }
 function renderRegister(){
  document.getElementById('wrap').innerHTML=`
@@ -164,13 +174,14 @@ function renderRegister(){
     <label>Повторите пароль</label><input id="reg-pass2" type="password" placeholder="••••••">
     <div class="ai-sec">
       <div class="ai-sec-title">🤖 ИИ-репетитор (необязательно)</div>
-      <label>Ссылка (URL Cloudflare-туннеля)</label><input id="aiUrl" autocomplete="off" placeholder="https://....trycloudflare.com">
-      <label>AI-токен</label><input id="aiToken" type="password" autocomplete="off" placeholder="AI Token">
+      <label>Ссылка (URL Cloudflare-туннеля)</label><input id="aiUrl" autocomplete="off" placeholder="https://....trycloudflare.com" oninput="persistAIFields()">
+      <label>AI-токен</label><input id="aiToken" type="password" autocomplete="off" placeholder="AI Token" oninput="persistAIFields()">
     </div>
     <button class="btn" onclick="doRegister()">Создать аккаунт</button>
     <button class="link" onclick="renderLogin()">Уже есть аккаунт? Войти</button>
     <div class="msg" id="msg"></div>
   </div>`;
+ loadAIIntoFields();
 }
 function doLogin(){
  const l=document.getElementById('login').value.trim();
@@ -215,8 +226,8 @@ function goSubjects(){
     <div class="ai-sec">
       <div class="ai-sec-title">🤖 ИИ-репетитор</div>
       <p class="ai-hint">Ссылка и токен применяются ко всем предметам.</p>
-      <label>Ссылка (URL Cloudflare-туннеля)</label><input id="aiUrl" autocomplete="off" placeholder="https://....trycloudflare.com">
-      <label>AI-токен</label><input id="aiToken" type="password" autocomplete="off" placeholder="AI Token">
+      <label>Ссылка (URL Cloudflare-туннеля)</label><input id="aiUrl" autocomplete="off" placeholder="https://....trycloudflare.com" oninput="persistAIFields()">
+      <label>AI-токен</label><input id="aiToken" type="password" autocomplete="off" placeholder="AI Token" oninput="persistAIFields()">
       <button class="btn btn-sm" onclick="saveAI()">💾 Сохранить настройки AI</button>
       <button class="btn btn-sm btn-ghost" onclick="shareToPhone()">📲 Поделиться на телефон</button>
       <button class="btn btn-sm btn-ghost" onclick="toggleInviteBox()">🔗 Показать/скопировать ссылку</button>
