@@ -58,7 +58,8 @@ function getBridgeToken(){return (window.SITE_AI&&window.SITE_AI.token)||localSt
 function authHeaders(){let t=getBridgeToken();const f=document.getElementById('aiToken');if(f&&f.value.trim())t=f.value.trim();return {'Content-Type':'application/json','Authorization':'Bearer '+t};}
 function sessionToken(){return localStorage.getItem('ege_session')||'';}
 function currentUser(){try{return JSON.parse(localStorage.getItem(AUTH_KEY)||'null');}catch(e){return null;}}
-function setSession(token,login){localStorage.setItem('ege_session',token||'');localStorage.setItem(AUTH_KEY,JSON.stringify({login:login||''}));}
+function clearLocalData(){['ege','ege_math','ege_soc','ege_info'].forEach(function(p){['weeks','history','errors','chat'].forEach(function(k){localStorage.removeItem(p+'_'+k);});});localStorage.removeItem('ege_completed_weeks');localStorage.removeItem('ege_test_history');localStorage.removeItem('ege_user_errors');localStorage.removeItem('ege_chat_history');}
+function setSession(token,login){const prev=localStorage.getItem(AUTH_KEY);localStorage.setItem('ege_session',token||'');localStorage.setItem(AUTH_KEY,JSON.stringify({login:login||''}));if(prev){try{if(JSON.parse(prev).login!==login)clearLocalData();}catch(e){clearLocalData();}}}
 async function apiPost(path,body){
  let url=getBridgeURL();
  const field=document.getElementById('aiUrl'); if(field&&field.value.trim()){url=field.value.trim().replace(/\/+$/,'');}
