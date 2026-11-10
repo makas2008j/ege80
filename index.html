@@ -36,7 +36,9 @@ input:focus{border-color:var(--accent)}
 .ai-sec label{margin-top:12px}
 .ai-sec .btn-sm{margin-top:14px;padding:11px;font-size:13px}
 .ai-hint{font-size:11px;color:var(--muted);margin:6px 0 2px;line-height:1.4}
-@media(max-width:480px){.wrap{max-width:100%}}
+.btn-ghost{background:var(--bg);color:var(--accent);border:1px solid var(--accent)}
+.invite-box{width:100%;margin-top:10px;background:var(--bg);color:var(--text);border:1px solid var(--accent);border-radius:10px;padding:10px;font-size:12px;font-family:monospace;resize:none;word-break:break-all}
+@media(max-width:480px){.wrap{max-width:100%}body{padding:12px;padding-top:max(12px,env(safe-area-inset-top));padding-bottom:max(12px,env(safe-area-inset-bottom))}.card{padding:20px 18px;border-radius:16px}input{font-size:16px}.btn{min-height:48px}.subject{padding:14px}}
 </style>
 <script src="site-config.js"></script>
 </head>
@@ -95,6 +97,44 @@ function loadAIIntoFields(){
  const el=document.getElementById('aiUrl'),te=document.getElementById('aiToken');
  if(el)el.value=u;
  if(te)te.value=t;
+}
+// --- ссылка-приглашение: #ai=<url>&tk=<token> передаёт настройки на другое устройство ---
+function applyInviteFromHash(){
+ let h=location.hash.replace(/^#/,''); if(!h)return false;
+ let params; try{params=new URLSearchParams(h);}catch(e){return false;}
+ const ai=params.get('ai'), tk=params.get('tk');
+ if(!ai)return false;
+ const url=decodeURIComponent(ai).trim().replace(/\/+$/,'');
+ const token=(tk||'').trim();
+ AI_PREFIXES.forEach(p=>{localStorage.setItem(p+'_ai_url',url); if(token)localStorage.setItem(p+'_ai_token',token);});
+ history.replaceState(null,'',location.pathname+location.search);
+ return true;
+}
+function buildInviteLink(){
+ const {url,token}=aiValues();
+ if(!url)return '';
+ const base=location.origin+location.pathname;
+ return base+'#ai='+encodeURIComponent(url)+(token?('&tk='+encodeURIComponent(token)):'');
+}
+function shareToPhone(){
+ const link=buildInviteLink();
+ if(!link){const m=document.getElementById('msg');if(m){m.textContent='Сначала укажи URL туннеля.';m.className='msg err';}return;}
+ if(navigator.share){
+   navigator.share({title:'ЕГЭ 80+ — вход',text:'Открой ссылку и войди',url:link}).catch(()=>{});
+ }else{
+   const box=document.getElementById('inviteBox');
+   if(box){box.value=link;box.style.display='block';box.select();try{document.execCommand('copy');}catch(e){}}
+   const m=document.getElementById('msg');if(m){m.textContent='Ссылка скопирована — отправь её на телефон.';m.className='msg ok';}
+ }
+}
+function toggleInviteBox(){
+ const box=document.getElementById('inviteBox');
+ if(!box)return;
+ if(box.style.display==='block'){box.style.display='none';return;}
+ const link=buildInviteLink();
+ if(!link){const m=document.getElementById('msg');if(m){m.textContent='Сначала укажи URL туннеля.';m.className='msg err';}return;}
+ box.value=link;box.style.display='block';box.select();
+ try{document.execCommand('copy');const m=document.getElementById('msg');if(m){m.textContent='Ссылка скопирована.';m.className='msg ok';}}catch(e){}
 }
 
 function renderLogin(){
@@ -178,6 +218,9 @@ function goSubjects(){
       <label>Ссылка (URL Cloudflare-туннеля)</label><input id="aiUrl" autocomplete="off" placeholder="https://....trycloudflare.com">
       <label>AI-токен</label><input id="aiToken" type="password" autocomplete="off" placeholder="AI Token">
       <button class="btn btn-sm" onclick="saveAI()">💾 Сохранить настройки AI</button>
+      <button class="btn btn-sm btn-ghost" onclick="shareToPhone()">📲 Поделиться на телефон</button>
+      <button class="btn btn-sm btn-ghost" onclick="toggleInviteBox()">🔗 Показать/скопировать ссылку</button>
+      <textarea id="inviteBox" class="invite-box" readonly style="display:none" rows="3"></textarea>
       <div class="msg" id="msg"></div>
     </div>
     <button class="logout" onclick="logout()">Выйти</button>
@@ -191,6 +234,7 @@ function logout(){
  localStorage.removeItem(AUTH_KEY);
  renderLogin();
 }
+applyInviteFromHash();
 if(currentUser()&&sessionToken()){goSubjects();}else{
  if(currentUser()&&!sessionToken()){localStorage.removeItem(AUTH_KEY);}
  renderLogin();
