@@ -60,7 +60,9 @@ function sessionToken(){return localStorage.getItem('ege_session')||'';}
 function currentUser(){try{return JSON.parse(localStorage.getItem(AUTH_KEY)||'null');}catch(e){return null;}}
 function setSession(token,login){localStorage.setItem('ege_session',token||'');localStorage.setItem(AUTH_KEY,JSON.stringify({login:login||''}));}
 async function apiPost(path,body){
- const url=getBridgeURL(); if(!url) throw new Error('Нет URL AI-сервера');
+ let url=getBridgeURL();
+ const field=document.getElementById('aiUrl'); if(field&&field.value.trim()){url=field.value.trim().replace(/\/+$/,'');}
+ if(!url) throw new Error('Нет URL AI-сервера: введи ссылку в поле «ИИ-репетитор».');
  const h=authHeaders(); const st=sessionToken(); if(st)h['X-Session-Token']=st;
  const r=await fetch(url+path,{method:'POST',headers:h,body:JSON.stringify(body||{})});
  let d={}; try{d=await r.json();}catch(e){}
