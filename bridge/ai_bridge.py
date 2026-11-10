@@ -78,7 +78,7 @@ def verify_user(login,pw):
     return u
 
 def create_session(uid):
-    d=db(); d.execute('DELETE FROM sessions WHERE user_id=?',(uid,))
+    d=db()
     token=secrets.token_urlsafe(32)
     d.execute('INSERT INTO sessions(token,user_id,expires_at) VALUES(?,?,datetime(\'now\',\'+30 days\'))',(token,uid))
     d.commit(); d.close(); return token
