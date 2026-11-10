@@ -144,7 +144,7 @@ class Handler(BaseHTTPRequestHandler):
         return not AI_TOKEN or self.headers.get('Authorization','')=='Bearer '+AI_TOKEN
     def do_OPTIONS(self):
         self.send_response(204); self.send_header('Access-Control-Allow-Origin','*'); self.send_header('Access-Control-Allow-Methods','GET, POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers','Content-Type, Authorization'); self.send_header('Access-Control-Max-Age','86400'); self.end_headers()
+        self.send_header('Access-Control-Allow-Headers','Content-Type, Authorization, X-Session-Token'); self.send_header('Access-Control-Max-Age','86400'); self.end_headers()
     def do_GET(self):
         if self.path.startswith('/api/') and not self.authorized(): return send_json(self,401,{'ok':False,'error':'Unauthorized'})
         if self.path=='/api/status':
