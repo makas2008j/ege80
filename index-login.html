@@ -55,7 +55,7 @@ const SUBJECTS=[
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function getBridgeURL(){return (window.SITE_AI&&window.SITE_AI.url)||localStorage.getItem('ege_ai_url')||'';}
 function getBridgeToken(){return (window.SITE_AI&&window.SITE_AI.token)||localStorage.getItem('ege_ai_token')||'';}
-function authHeaders(){return {'Content-Type':'application/json','Authorization':'Bearer '+getBridgeToken()};}
+function authHeaders(){let t=getBridgeToken();const f=document.getElementById('aiToken');if(f&&f.value.trim())t=f.value.trim();return {'Content-Type':'application/json','Authorization':'Bearer '+t};}
 function sessionToken(){return localStorage.getItem('ege_session')||'';}
 function currentUser(){try{return JSON.parse(localStorage.getItem(AUTH_KEY)||'null');}catch(e){return null;}}
 function setSession(token,login){localStorage.setItem('ege_session',token||'');localStorage.setItem(AUTH_KEY,JSON.stringify({login:login||''}));}
