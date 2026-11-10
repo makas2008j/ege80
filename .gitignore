@@ -1,0 +1,25 @@
+# EGE project .gitignore - do not publish secrets/local data
+
+bridge/*.db
+bridge/*.db-journal
+bridge/*.db-wal
+bridge/*.db-shm
+data/
+*.token
+ai_token.txt
+site-config.js
+*.log
+data/*.log
+__pycache__/
+*.pyc
+ege_russian_80plus_ai_site/
+cloudflared.exe
+8000
+*.bak
+*~
+tunnel/
+ege_local_ai_bridge/
+Thumbs.db
+.DS_Store
+
+.gigatool/
