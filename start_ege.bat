@@ -2,10 +2,10 @@
 setlocal EnableExtensions
 chcp 65001 >nul
 cd /d "%~dp0"
-title EGE AI + Cloudflare Tunnel - START
+title EGE AI + Tailscale Funnel - START
 
 echo ================================================
-echo  EGE Russian 80+ - AI + Cloudflare Tunnel
+echo  EGE 80+ - AI bridge + Tailscale Funnel
 echo ================================================
 echo.
 
@@ -14,15 +14,14 @@ if errorlevel 1 (echo ERROR: Python not found.&pause&exit /b 1)
 where curl >nul 2>&1
 if errorlevel 1 (echo ERROR: curl not found.&pause&exit /b 1)
 
-REM -------- locate cloudflared (tunnel/) --------
-set "CF=%~dp0tunnel\cloudflared.exe"
-if not exist "%CF%" set "CF="
-if not defined CF if exist "%~dp0cloudflared.exe" set "CF=%~dp0cloudflared.exe"
-if not defined CF if exist "%LOCALAPPDATA%\cloudflared.exe" set "CF=%LOCALAPPDATA%\cloudflared.exe"
-if defined CF goto :cf_ok
-echo ERROR: cloudflared.exe not found. Put it in tunnel\ or install cloudflared.
-exit /b 1
-:cf_ok
+REM -------- locate tailscale --------
+set "TS=%ProgramFiles%\Tailscale\tailscale.exe"
+if not exist "%TS%" set "TS=%ProgramFiles(x86)%\Tailscale\tailscale.exe"
+if not exist "%TS%" set "TS=%LOCALAPPDATA%\Tailscale\tailscale.exe"
+if not exist "%TS%" (
+  echo WARNING: tailscale.exe not found. Phone access via Funnel will not work.
+  set "TS="
+)
 
 REM -------- AI token (create once, reuse) --------
 set "DATA_DIR=%~dp0data"
@@ -50,8 +49,8 @@ curl -s http://127.0.0.1:11434/api/tags >nul 2>&1
 if errorlevel 1 (echo ERROR: Ollama unavailable on port 11434.&pause&exit /b 1)
 echo       Ollama ready.
 
-REM ---------- 2. AI bridge (port 8000, token-protected) ----------
-echo [2/4] Starting AI bridge on http://127.0.0.1:8000  (auth on)
+REM ---------- 2. AI bridge (port 8000) ----------
+echo [2/4] Starting AI bridge on http://127.0.0.1:8000
 set "BRIDGE_DIR="
 if exist "%~dp0bridge" (set "BRIDGE_DIR=%~dp0bridge")
 if not defined BRIDGE_DIR if exist "%~dp0ege_local_ai_bridge" (set "BRIDGE_DIR=%~dp0ege_local_ai_bridge")
@@ -69,37 +68,34 @@ for /l %%I in (1,1,20) do if not defined BRIDGE_OK (
 if not defined BRIDGE_OK (echo ERROR: AI bridge did not start.&pause&exit /b 1)
 echo       Bridge ready.
 
-REM ---------- 3. Cloudflare tunnel ----------
-echo [3/4] Starting Cloudflare Tunnel -> 8000
-set "TUNNEL_LOG=%DATA_DIR%\cloudflared_tunnel.log"
-if exist "%TUNNEL_LOG%" del /q "%TUNNEL_LOG%" >nul 2>&1
-start "CF Tunnel" /min "%CF%" tunnel --no-autoupdate --url http://127.0.0.1:8000 --logfile "%TUNNEL_LOG%"
-
-echo       Waiting for public URL...
-set "PUBLIC_URL="
-for /l %%I in (1,1,35) do if not defined PUBLIC_URL (
-  for /f "usebackq delims=" %%u in (`powershell -NoProfile -Command "$t=Get-Content -Raw '%TUNNEL_LOG%' -ErrorAction SilentlyContinue; if($t){ $m=[regex]::Match($t,'https://[a-z0-9-]+\.trycloudflare\.com'); if($m.Success){$m.Value}}" 2^>$null`) do set "PUBLIC_URL=%%u"
-  if not defined PUBLIC_URL timeout /t 1 /nobreak >nul
+REM ---------- 3. Tailscale Funnel ----------
+echo [3/4] Enabling Tailscale Funnel -^> 8000
+if not defined TS (
+  echo       WARNING: Tailscale not found. Phone access disabled.
+  goto :tunnel_ready
 )
+"%TS%" status >nul 2>&1
+if errorlevel 1 (
+  echo       Tailscale is not connected. Open Tailscale app and sign in.
+  goto :tunnel_ready
+)
+"%TS%" funnel --bg 8000 >nul 2>&1
+if errorlevel 1 (
+  echo       WARNING: Funnel could not start. Enable Funnel once in Tailscale admin.
+  goto :tunnel_ready
+)
+echo       Funnel running.
+:tunnel_ready
 
 echo.
 echo ================================================
-if defined PUBLIC_URL (
-  echo  PHONE URL:   %PUBLIC_URL%
-  echo  AI TOKEN:    %AI_TOKEN%
-  echo.
-  echo  On the phone: paste PHONE URL and AI TOKEN
-  echo  into the AI field, then Save and Check.
-) else (
-  echo  PHONE URL:   NOT READY (check data\cloudflared_tunnel.log)
-  echo  Local AI:    http://127.0.0.1:8000  (works on this PC)
-)
-echo  Token file:   %TOKEN_FILE%
+echo  LOCAL PC:  http://127.0.0.1:8080/index-login.html
+echo  PHONE:     https://desktop-03jsujc.tail8ce031.ts.net
+echo  Token file: %TOKEN_FILE%
 echo ================================================
 echo.
 
-REM -------- write live AI config for the site pages --------
-REM Постоянный адрес Tailscale Funnel (не перезаписываем случайным trycloudflare)
+REM -------- permanent site config (Tailscale URL) --------
 set "CFG_FILE=%~dp0site-config.js"
 if not exist "%CFG_FILE%" (
   (
@@ -125,5 +121,5 @@ for /l %%I in (1,1,20) do if not defined SITE_OK (
 if defined SITE_OK (echo       Site server ready.) else (echo       WARNING: site server not ready - check the EGE Site window.)
 start "" http://127.0.0.1:8080/index-login.html
 
-echo Keep this window and the bridge windows open.
+echo Keep this window and the bridge window open.
 pause
