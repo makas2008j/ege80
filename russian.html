@@ -88,7 +88,7 @@ h1{font-size:19px;font-weight:800;background:linear-gradient(135deg,#3b82f6,#1d4
 .ai-inline-img{margin-top:8px;max-width:180px;border-radius:12px;overflow:hidden;border:1px solid var(--border)}
 .ai-inline-img img{display:block;width:100%;height:auto}
 </style>
-<script src="site-config.js"></script>
+<script src="site-config.js?v=2"></script>
 </head>
 <body data-theme="dark">
 <div class="container">
@@ -714,14 +714,14 @@ function dbBridgeURL(){return (window.SITE_AI&&window.SITE_AI.url)||localStorage
 function dbBridgeToken(){return (window.SITE_AI&&window.SITE_AI.token)||localStorage.getItem('ege_ai_token')||'';}
 function dbAutoHeaders(){const h={'Content-Type':'application/json','Authorization':'Bearer '+dbBridgeToken()};const st=localStorage.getItem('ege_session')||'';if(st)h['X-Session-Token']=st;return h;}
 async function dbPost(path,body){if(!dbBridgeURL())throw new Error('no-url');const r=await fetch(dbBridgeURL()+path,{method:'POST',headers:dbAutoHeaders(),body:JSON.stringify(body||{})});let d={};try{d=await r.json();}catch(e){}if(r.status===401){localStorage.removeItem('ege_session');localStorage.removeItem('ege_auth_user');throw new Error('auth');}if(!r.ok)throw new Error(d.error||('HTTP '+r.status));return d;}
-async function dbLoad(){if(!dbBridgeURL()){DB.net=false;return;}try{const d=await dbPost('/api/auth/me',{});DB.user=d.user;}catch(e){if(e.message==='auth'){DB.net=false;showAuthBanner();return;}}try{const r=await dbPost('/api/data/get',{subject:SUBJECT_ID,keys:['weeks','history','errors','chat']});const ds=r.data||{};completedWeeks=(ds.weeks&&typeof ds.weeks==='object')?ds.weeks:{};localStorage.setItem('ege_completed_weeks',JSON.stringify(completedWeeks));testHistory=Array.isArray(ds.history)?ds.history:[];localStorage.setItem('ege_test_history',JSON.stringify(testHistory));userErrors=Array.isArray(ds.errors)?ds.errors:[];localStorage.setItem('ege_user_errors',JSON.stringify(userErrors));chatHistory=Array.isArray(ds.chat)?ds.chat:[];localStorage.setItem('ege_chat_history',JSON.stringify(chatHistory));DB.net=true;renderAfterLoad();}catch(e){DB.net=false;}}
+async function dbLoad(){if(!dbBridgeURL()){DB.net=false;return;}try{const d=await dbPost('/api/auth/me',{});DB.user=d.user;}catch(e){if(e.message==='auth'){DB.net=false;showAuthBanner();return;}}try{const r=await dbPost('/api/data/get',{subject:SUBJECT_ID,keys:['weeks','history','errors','chat']});const ds=r.data||{};completedWeeks=(ds.weeks&&typeof ds.weeks==='object')?ds.weeks:{};localStorage.setItem('ege_completed_weeks',JSON.stringify(completedWeeks));testHistory=Array.isArray(ds.history)?ds.history:[];localStorage.setItem('ege_test_history',JSON.stringify(testHistory));userErrors=Array.isArray(ds.errors)?ds.errors:[];localStorage.setItem('ege_user_errors',JSON.stringify(userErrors));const _newChat=Array.isArray(ds.chat)?ds.chat:[];const _hash=JSON.stringify(_newChat);if(_hash!==JSON.stringify(chatHistory)){chatHistory=_newChat;localStorage.setItem('ege_chat_history',_hash);window._chatChanged=true;}DB.net=true;renderAfterLoad();}catch(e){DB.net=false;}}
 function dbSave(){if(!DB.net||!dbBridgeURL())return;const payload={'weeks':completedWeeks,'history':testHistory,'errors':userErrors,'chat':chatHistory};dbPost('/api/data/set',{subject:SUBJECT_ID,data:payload}).catch(()=>{});}
 function startAutoSync(){setInterval(function(){if(!DB.net||!dbBridgeURL())return;if(document.visibilityState!=='visible')return;const act=document.activeElement;if(act&&(act.id==='aiInput'||act.tagName==='INPUT'||act.tagName==='TEXTAREA'))return;dbLoad();},5000);}
 
 const fipiBankUrl = 'https://fipi.ru/ege/otkrytyy-bank-zadaniy-ege';
 const sdamgiaBase = 'https://rus-ege.sdamgia.ru/';
 
-function renderAfterLoad(){renderWeeks();renderTrainer();renderRoutine();renderHistory();renderErrorTaskSelect();renderErrors();updateProgress();renderChatHistory();}
+function renderAfterLoad(){renderWeeks();renderTrainer();renderRoutine();renderHistory();renderErrorTaskSelect();renderErrors();updateProgress();if(window._chatChanged){window._chatChanged=false;renderChatHistory(true);}}
 function initApp() {
   renderAfterLoad();
   dbLoad();
@@ -1011,7 +1011,7 @@ function addAIMessage(role,text,imageData){
   d.innerHTML=inner;c.appendChild(d);c.scrollTop=c.scrollHeight;
   chatHistory.push({role:role,content:text});chatHistory=chatHistory.slice(-200);localStorage.setItem('ege_chat_history',JSON.stringify(chatHistory));dbSave();
 }
-function renderChatHistory(){const c=document.getElementById('aiChat');if(!c)return;c.innerHTML='';chatHistory.forEach(m=>{const d=document.createElement('div');d.className='ai-msg '+(m.role==='user'?'ai-user':'ai-bot');d.innerHTML=m.role==='user'?escapeAI(m.content):renderAI(m.content);c.appendChild(d);});c.scrollTop=c.scrollHeight;}
+function renderChatHistory(keepScroll){const c=document.getElementById('aiChat');if(!c)return;const prev=c.scrollTop;const atBottom=(c.scrollHeight-c.scrollTop-c.clientHeight)<40;c.innerHTML='';chatHistory.forEach(m=>{const d=document.createElement('div');d.className='ai-msg '+(m.role==='user'?'ai-user':'ai-bot');d.innerHTML=m.role==='user'?escapeAI(m.content):renderAI(m.content);c.appendChild(d);});if(keepScroll&&!atBottom){c.scrollTop=prev;}else{c.scrollTop=c.scrollHeight;}}
 function clearChat(){chatHistory=[];localStorage.setItem('ege_chat_history','[]');dbSave();const c=document.getElementById('aiChat');if(c)c.innerHTML='';}
 let aiAttachedImage=null; // base64 без префикса, уходит на сервер
 let aiAttachedImageDataURI=null; // полный data-URI для превью в чате
