@@ -4,6 +4,7 @@ HOST='127.0.0.1'; PORT=8000
 AI_TOKEN=os.environ.get('AI_TOKEN','').strip()
 OLLAMA_URL=os.environ.get('OLLAMA_URL','http://127.0.0.1:11434')
 MODEL=os.environ.get('OLLAMA_MODEL','qwen3:8b')
+VISION_MODEL=os.environ.get('OLLAMA_VISION_MODEL','qwen2.5vl:7b')
 TIMEOUT=300
 SYSTEM_PROMPTS={
  'russian':'Ты локальный репетитор по русскому языку для подготовки к ЕГЭ (Задание 27 — сочинение, тесты). Отвечай по-русски, понятно и по делу. Если создаёшь задания, они авторские, а не официальные задания ФИПИ.',
@@ -146,7 +147,20 @@ def chat(message,history=None,images=None,subject=None,errors=None):
     if isinstance(images,list) and images:
         user_part['images']=[img for img in images if isinstance(img,str) and img.strip()]
     messages.append(user_part)
-    _,data=ollama_request('/api/chat',{'model':MODEL,'messages':messages,'stream':False,'think':False,'options':{'temperature':0.3}})
+    use_model=MODEL
+    payload={'model':use_model,'messages':messages,'stream':False,'options':{'temperature':0.3}}
+    if isinstance(images,list) and images:
+        use_model=VISION_MODEL
+        payload={'model':use_model,'messages':messages,'stream':False,'options':{'temperature':0.3}}
+    else:
+        payload['think']=False
+    try:
+        _,data=ollama_request('/api/chat',payload)
+    except RuntimeError as e:
+        # если vision-модель не установлена — понятная ошибка
+        if 'multimodal' in str(e).lower():
+            raise RuntimeError('Для разбора фото нужна модель '+VISION_MODEL+'. Установи её: ollama pull '+VISION_MODEL)
+        raise
     msg=data.get('message') or {}; content=msg.get('content') or msg.get('thinking') or data.get('response') or ''
     if not content: raise RuntimeError('Ollama вернула пустой ответ: '+json.dumps(data,ensure_ascii=False))
     return content
