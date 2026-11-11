@@ -645,17 +645,11 @@ h1{font-size:19px;font-weight:800;background:linear-gradient(135deg,#3b82f6,#1d4
     <!-- Секция AI-репетитора (Cloudflare Tunnel + токен) -->
 <div class="ai-settings-card">
     <h3>🤖 AI-репетитор</h3>
-    <p>Укажи URL Cloudflare-туннеля и токен из окна <b>start_ege.bat</b>.</p>
-    
+    <p>Подключается автоматически. Если не отвечает — проверь, что на ПК запущен start_ege.bat.</p>
     <div class="ai-input-group">
-        <input type="text" id="aiUrlInput" placeholder="https://....trycloudflare.com">
-        <input type="password" id="aiTokenInput" placeholder="AI Token">
-        <button id="saveAiBtn" class="ai-btn ai-btn-accent" onclick="saveAIUrl()">💾 Сохранить</button>
         <button id="testAiBtn" class="ai-btn ai-btn-outline" onclick="checkAIConnection()">🔌 Проверить</button>
-        <button id="clearAiBtn" class="ai-btn ai-btn-ghost" onclick="clearAIUrl()">🗑️ Очистить</button>
-        <button class="ai-btn ai-btn-ghost" onclick="clearChat()">🧹 Очистить чат</button>
+        <button id="clearChatBtn" class="ai-btn ai-btn-ghost" onclick="clearChat()">🧹 Очистить чат</button>
     </div>
-    
     <div id="aiStatus">AI-сервер сохранён: https://mission-frequent-corps-venture.trycloudflare.com</div>
 </div>
     <div id="aiChat" class="ai-chat"></div>
@@ -950,7 +944,7 @@ function normalizeAIUrl(v){return (v||'').trim().replace(/\/+$/,'');}
 function setAIStatus(s){const e=document.getElementById('aiStatus');if(e)e.textContent=s;}
 function aiUrlFromField(){const el=document.getElementById('aiUrlInput');return normalizeAIUrl(el&&el.value);}
 function aiTokenFromField(){const el=document.getElementById('aiTokenInput');return (el&&el.value||'').trim();}
-function aiSavedUrl(){return normalizeAIUrl(localStorage.getItem(AI_URL_KEY));}
+function aiSavedUrl(){const c=(typeof window!=='undefined'&&window.SITE_AI&&window.SITE_AI.url)||'';return normalizeAIUrl(c||localStorage.getItem(AI_URL_KEY));}
 function aiSavedToken(){return (localStorage.getItem(AI_TOKEN_KEY)||'').trim();}
 function aiHeaders(withAuth){
   const h={'Content-Type':'application/json'};
