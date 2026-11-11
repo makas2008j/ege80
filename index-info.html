@@ -213,7 +213,7 @@ function aiUrlFromField(){const el=document.getElementById('aiUrlInput');return 
 function aiTokenFromField(){const el=document.getElementById('aiTokenInput');return (el&&el.value||'').trim();}
 function aiSavedUrl(){return normalizeAIUrl(localStorage.getItem(AI_URL_KEY));}
 function aiSavedToken(){return (localStorage.getItem(AI_TOKEN_KEY)||'').trim();}
-function aiHeaders(withAuth){const h={'Content-Type':'application/json'};const t=aiSavedToken()||aiTokenFromField();if(withAuth&&t)h['Authorization']='Bearer '+t;return h;}
+function aiHeaders(withAuth){const h={'Content-Type':'application/json'};const t=aiSavedToken()||aiTokenFromField();if(withAuth&&t)h['Authorization']='Bearer '+t;const st=(typeof localStorage!=='undefined'&&localStorage.getItem('ege_session'))||'';if(st)h['X-Session-Token']=st;return h;}
 function loadAISettings(){const el=document.getElementById('aiUrlInput'),te=document.getElementById('aiTokenInput');let u=aiSavedUrl(),t=aiSavedToken();const cfg=window.SITE_AI||null;if(cfg&&cfg.url){u=cfg.url;t=cfg.token||t;localStorage.setItem(AI_URL_KEY,u);if(t)localStorage.setItem(AI_TOKEN_KEY,t);}if(el)el.value=u;if(te)te.value=t;if(u)setAIStatus('AI-сервер сохранён');else setAIStatus('🔴 AI недоступен. Укажи URL и токен.');}
 function saveAIUrl(){const u=aiUrlFromField(),t=aiTokenFromField();if(!u){setAIStatus('🔴 Укажи URL туннеля.');return;}localStorage.setItem(AI_URL_KEY,u);localStorage.setItem(AI_TOKEN_KEY,t);setAIStatus('🟢 Настройки сохранены');}
 function clearAIUrl(){localStorage.removeItem(AI_URL_KEY);localStorage.removeItem(AI_TOKEN_KEY);const el=document.getElementById('aiUrlInput'),te=document.getElementById('aiTokenInput');if(el)el.value='';if(te)te.value='';setAIStatus('Настройки очищены');}

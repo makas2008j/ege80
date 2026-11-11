@@ -155,7 +155,16 @@ class Handler(BaseHTTPRequestHandler):
     protocol_version='HTTP/1.1'
     def log_message(self,fmt,*args): print('[%s] %s'%(self.log_date_time_string(),fmt%args),flush=True)
     def authorized(self):
-        return not AI_TOKEN or self.headers.get('Authorization','')=='Bearer '+AI_TOKEN
+        if not AI_TOKEN: return True
+        if self.headers.get('Authorization','')=='Bearer '+AI_TOKEN: return True
+        # запросы авторизации всегда доступны (логин/регистрация)
+        if self.path.startswith('/api/auth/'): return True
+        # любой запрос с валидной пользовательской сессией
+        try:
+            if session_user(self.session_token()): return True
+        except Exception:
+            pass
+        return False
     def do_OPTIONS(self):
         self.send_response(204); self.send_header('Access-Control-Allow-Origin','*'); self.send_header('Access-Control-Allow-Methods','GET, POST, OPTIONS')
         self.send_header('Access-Control-Allow-Headers','Content-Type, Authorization, X-Session-Token'); self.send_header('Access-Control-Max-Age','86400'); self.end_headers()

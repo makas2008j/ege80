@@ -154,11 +154,6 @@ function renderLogin(){
     <div class="sub">Подготовка на 80+ по 4 предметам</div>
     <label>Логин</label><input id="login" autocomplete="off" placeholder="admin">
     <label>Пароль</label><input id="pass" type="password" placeholder="admin">
-    <div class="ai-sec">
-      <div class="ai-sec-title">🤖 ИИ-репетитор (необязательно)</div>
-      <label>Ссылка (URL Cloudflare-туннеля)</label><input id="aiUrl" autocomplete="off" placeholder="https://....trycloudflare.com" oninput="persistAIFields()">
-      <label>AI-токен</label><input id="aiToken" type="password" autocomplete="off" placeholder="AI Token" oninput="persistAIFields()">
-    </div>
     <button class="btn" onclick="doLogin()">Войти</button>
     <button class="link" onclick="renderRegister()">Нет аккаунта? Зарегистрироваться</button>
     <div class="msg" id="msg"></div>
@@ -173,11 +168,6 @@ function renderRegister(){
     <label>Имя / логин</label><input id="reg-login" autocomplete="off" placeholder="например: petya">
     <label>Пароль</label><input id="reg-pass" type="password" placeholder="••••••">
     <label>Повторите пароль</label><input id="reg-pass2" type="password" placeholder="••••••">
-    <div class="ai-sec">
-      <div class="ai-sec-title">🤖 ИИ-репетитор (необязательно)</div>
-      <label>Ссылка (URL Cloudflare-туннеля)</label><input id="aiUrl" autocomplete="off" placeholder="https://....trycloudflare.com" oninput="persistAIFields()">
-      <label>AI-токен</label><input id="aiToken" type="password" autocomplete="off" placeholder="AI Token" oninput="persistAIFields()">
-    </div>
     <button class="btn" onclick="doRegister()">Создать аккаунт</button>
     <button class="link" onclick="renderLogin()">Уже есть аккаунт? Войти</button>
     <div class="msg" id="msg"></div>

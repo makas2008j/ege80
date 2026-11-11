@@ -7,7 +7,6 @@ bridge/*.db-shm
 data/
 *.token
 ai_token.txt
-site-config.js
 *.log
 data/*.log
 __pycache__/

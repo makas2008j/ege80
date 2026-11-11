@@ -956,6 +956,8 @@ function aiHeaders(withAuth){
   const h={'Content-Type':'application/json'};
   const t=aiSavedToken()||aiTokenFromField();
   if(withAuth && t) h['Authorization']='Bearer '+t;
+  const st=(typeof localStorage!=='undefined'&&localStorage.getItem('ege_session'))||'';
+  if(st) h['X-Session-Token']=st;
   return h;
 }
 function loadAISettings(){

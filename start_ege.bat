@@ -99,14 +99,19 @@ echo ================================================
 echo.
 
 REM -------- write live AI config for the site pages --------
+REM Постоянный адрес Tailscale Funnel (не перезаписываем случайным trycloudflare)
 set "CFG_FILE=%~dp0site-config.js"
-(
-  echo window.SITE_AI = {
-  echo   url: "%PUBLIC_URL%",
-  echo   token: "%AI_TOKEN%"
-  echo };
-)> "%CFG_FILE%"
-if exist "%CFG_FILE%" (echo [config] site-config.js updated.) else (echo WARNING: cannot write site-config.js)
+if not exist "%CFG_FILE%" (
+  (
+    echo window.SITE_AI = {
+    echo   url: "https://desktop-03jsujc.tail8ce031.ts.net",
+    echo   token: ""
+    echo };
+  )> "%CFG_FILE%"
+  echo [config] site-config.js created with permanent Tailscale URL.
+) else (
+  echo [config] site-config.js exists - keeping permanent URL.
+)
 
 REM ---------- 4. Local site server + open ----------
 echo [4/4] Starting local site server on http://127.0.0.1:8080
