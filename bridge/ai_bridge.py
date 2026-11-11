@@ -5,6 +5,7 @@ AI_TOKEN=os.environ.get('AI_TOKEN','').strip()
 OLLAMA_URL=os.environ.get('OLLAMA_URL','http://127.0.0.1:11434')
 MODEL=os.environ.get('OLLAMA_MODEL','qwen3:8b')
 VISION_MODEL=os.environ.get('OLLAMA_VISION_MODEL','qwen2.5vl:7b')
+NUM_CTX=int(os.environ.get('OLLAMA_NUM_CTX','8192'))
 TIMEOUT=300
 SYSTEM_PROMPTS={
  'russian':'Ты локальный репетитор по русскому языку для подготовки к ЕГЭ (Задание 27 — сочинение, тесты). Отвечай по-русски, понятно и по делу. Если создаёшь задания, они авторские, а не официальные задания ФИПИ.',
@@ -126,7 +127,7 @@ def chat(message,history=None,images=None,subject=None,errors=None):
     sysp=SYSTEM_PROMPTS.get(subject) or SYSTEM_PROMPT
     if isinstance(errors,list) and errors:
         lines=[]
-        for e in errors[:30]:
+        for e in errors[:12]:
             if not isinstance(e,dict): continue
             task=str(e.get('task') or '').strip()
             title=str(e.get('title') or '').strip()
@@ -140,26 +141,31 @@ def chat(message,history=None,images=None,subject=None,errors=None):
                        "обращай внимание на повторяющиеся ошибки и предлагай их проработать):\n"+"\n".join(lines))
     messages=[{'role':'system','content':sysp}]
     if isinstance(history,list):
-        for item in history[-12:]:
+        for item in history[-6:]:
             if isinstance(item,dict) and item.get('role') in ('user','assistant') and item.get('content'):
-                messages.append({'role':item['role'],'content':str(item['content'])})
+                c=str(item['content'])
+                if len(c)>1500: c=c[:1500]+' …'
+                messages.append({'role':item['role'],'content':c})
     user_part={'role':'user','content':str(message)}
     if isinstance(images,list) and images:
         user_part['images']=[img for img in images if isinstance(img,str) and img.strip()]
     messages.append(user_part)
     use_model=MODEL
-    payload={'model':use_model,'messages':messages,'stream':False,'options':{'temperature':0.3}}
+    opts={'temperature':0.3,'num_ctx':NUM_CTX}
+    payload={'model':use_model,'messages':messages,'stream':False,'options':opts}
     if isinstance(images,list) and images:
         use_model=VISION_MODEL
-        payload={'model':use_model,'messages':messages,'stream':False,'options':{'temperature':0.3}}
+        payload={'model':use_model,'messages':messages,'stream':False,'options':opts}
     else:
         payload['think']=False
     try:
         _,data=ollama_request('/api/chat',payload)
     except RuntimeError as e:
-        # если vision-модель не установлена — понятная ошибка
-        if 'multimodal' in str(e).lower():
+        msg=str(e).lower()
+        if 'multimodal' in msg:
             raise RuntimeError('Для разбора фото нужна модель '+VISION_MODEL+'. Установи её: ollama pull '+VISION_MODEL)
+        if 'context' in msg and 'exceed' in msg:
+            raise RuntimeError('Слишком длинный диалог для модели. Нажми «🧹 Очистить чат» и задай вопрос заново.')
         raise
     msg=data.get('message') or {}; content=msg.get('content') or msg.get('thinking') or data.get('response') or ''
     if not content: raise RuntimeError('Ollama вернула пустой ответ: '+json.dumps(data,ensure_ascii=False))

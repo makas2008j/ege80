@@ -56,7 +56,7 @@ if exist "%~dp0bridge" (set "BRIDGE_DIR=%~dp0bridge")
 if not defined BRIDGE_DIR if exist "%~dp0ege_local_ai_bridge" (set "BRIDGE_DIR=%~dp0ege_local_ai_bridge")
 if not defined BRIDGE_DIR (echo ERROR: bridge folder not found.&pause&exit /b 1)
 
-start "EGE AI Bridge" /d "%BRIDGE_DIR%" cmd /k "set AI_TOKEN=%AI_TOKEN%&&set OLLAMA_MODEL=qwen3:8b&&set OLLAMA_VISION_MODEL=qwen2.5vl:7b&&python ai_bridge.py"
+start "EGE AI Bridge" /d "%BRIDGE_DIR%" cmd /k "set AI_TOKEN=%AI_TOKEN%&&set OLLAMA_MODEL=qwen3:8b&&set OLLAMA_VISION_MODEL=qwen2.5vl:7b&&set OLLAMA_NUM_CTX=8192&&python ai_bridge.py"
 
 echo       Waiting for bridge...
 set "BRIDGE_OK="
